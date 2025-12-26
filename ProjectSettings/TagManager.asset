@@ -12,7 +12,7 @@ TagManager:
   - Water
   - UI
   - Background
-  - 
+  - VeinWalls
   - 
   - 
   - 
@@ -38,8 +38,15 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Background
+    uniqueID: 1567316461
+    locked: 0
+  - name: VeinWalls
+    uniqueID: 3216004081
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0
   m_RenderingLayers:
   - Default
+  - Background
