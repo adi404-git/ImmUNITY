@@ -3,32 +3,34 @@ using UnityEngine;
 public class InfiniteScroll : MonoBehaviour
 {
     [Header("Settings")]
-    public float scrollSpeed = 5f;
+    public float scrollSpeed = 2f;
+    public int totalImages = 3; // We are using 3 images to cover wide screens
 
-    private float spriteWidth;
+    private float imageWidth;
 
     void Start()
     {
-        // 1. Auto-measure the width of the sprite so you don't have to guess
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        spriteWidth = sr.bounds.size.x;
+        // 1. Measure the image automatically
+        // If your PPU is 100, a 2048px image will have a width of 20.48 units
+        imageWidth = GetComponent<SpriteRenderer>().bounds.size.x;
     }
 
     void Update()
     {
-        // 2. Move the object to the left
+        // 2. Move to the Left
         transform.Translate(Vector3.left * scrollSpeed * Time.deltaTime);
 
-        // 3. Check if we have gone completely off-screen to the left
-        // We compare position to negative width (meaning it's fully past the left edge)
-        if (transform.position.x < -spriteWidth)
+        // 3. The Reset Check
+        // If the object has moved completely off-screen to the left...
+        // (We check against the image width. If position < -width, it's gone)
+        if (transform.position.x < -imageWidth)
         {
-            // 4. Teleport to the right!
-            // We add (2 * width) because we have 2 backgrounds. 
-            // This snaps it exactly behind the second background.
-            Vector3 newPos = transform.position;
-            newPos.x += 2f * spriteWidth; 
-            transform.position = newPos;
+            // 4. Teleport to the back of the line
+            // We calculate how far we need to jump: Width * Total Number of Images
+            Vector3 jumpVector = Vector3.right * (imageWidth * totalImages);
+            
+            // Add that jump to the current position to snap it perfectly to the end
+            transform.position += jumpVector;
         }
     }
 }
