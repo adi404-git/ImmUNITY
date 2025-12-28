@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - RBC
+  - Enemy
   layers:
   - Default
   - TransparentFX

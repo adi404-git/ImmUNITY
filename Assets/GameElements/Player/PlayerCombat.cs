@@ -4,88 +4,99 @@ using System.Collections;
 
 public class PlayerCombat : MonoBehaviour
 {
-    [Header("1. Dash Attack Settings")]
-    public float dashForce = 35f;       // Stronger impulse for ramming
-    public float dashDuration = 0.2f;   // Short burst
-    public float dashCooldown = 1.2f;
-    
-    // Public flag: Other scripts (like Enemy) can check this to see if they got hit!
-    public bool isDashing { get; private set; } 
+    [Header("Attack Settings")]
+    public int dashDamage = 30; // 4 hits to kill a 100 HP enemy
+    public float dashForce = 35f;
+    public float dashDuration = 0.2f;
+    public float dashCooldown = 1f;
+
+    // State
+    public bool isDashing { get; private set; }
     private bool canDash = true;
 
-    [Header("2. Health Settings")]
-    public int maxHealth = 100;
-    private int currentHealth;
-
-    // Components
+    // References
     private Rigidbody2D rb;
-    private TrailRenderer dashTrail;
-    private PlayerMovement controller; // Ref to movement script
+    private PlayerStats myStats; // Link to our new Health script
+    private PlayerMovement movement; // Link to movement to pause it while dashing
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        dashTrail = GetComponent<TrailRenderer>();
-        controller = GetComponent<PlayerMovement>();
-        
-        currentHealth = maxHealth;
-        if(dashTrail) dashTrail.emitting = false;
-        isDashing = false;
+        myStats = GetComponent<PlayerStats>();
+        movement = GetComponent<PlayerMovement>();
     }
 
-    // --- INPUT LISTENER ---
-    // Make sure Input Actions has "Dash" mapped to Spacebar
+    // --- INPUT (Spacebar) ---
     void OnDash(InputValue value)
     {
         if (value.isPressed && canDash)
         {
-            StartCoroutine(PerformDashAttack());
+            StartCoroutine(PerformDash());
         }
     }
 
-    // --- THE DASH ATTACK ---
-    IEnumerator PerformDashAttack()
+    IEnumerator PerformDash()
     {
         canDash = false;
         isDashing = true;
-
-        // 1. Disable Normal Movement (Optional, prevents fighting the dash)
-        if (controller != null) controller.enabled = false;
-
-        // 2. Visuals ON
-        if(dashTrail) dashTrail.emitting = true;
-
-        // 3. Apply Force (Ramming Speed)
-        // We dash in the direction the MOUSE is looking (Aim Direction)
-        // This is better for attacking than WASD direction.
-        Vector2 aimDir = transform.right; 
         
-        rb.linearVelocity = Vector2.zero; // Reset current drift
-        rb.AddForce(aimDir * dashForce, ForceMode2D.Impulse);
+        // Optional: Disable normal movement for a moment
+        if (movement) movement.enabled = false;
 
-        // 4. Wait
+        // Dash towards Mouse (Aim)
+        // Vector2 dashDir = (Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue()) - transform.position).normalized;
+        // OR Dash Forward (Sprite Direction)
+        Vector2 dashDir = transform.right; 
+
+        rb.linearVelocity = Vector2.zero; // Reset drift
+        rb.AddForce(dashDir * dashForce, ForceMode2D.Impulse);
+
         yield return new WaitForSeconds(dashDuration);
 
-        // 5. Cleanup
-        if(dashTrail) dashTrail.emitting = false;
+        if (movement) movement.enabled = true;
         isDashing = false;
-        
-        // Re-enable control
-        if (controller != null) controller.enabled = true;
 
-        // 6. Cooldown
         yield return new WaitForSeconds(dashCooldown);
         canDash = true;
     }
 
-    // --- HEALTH SYSTEM ---
-    public void TakeDamage(int damage)
+    // --- MASTER COLLISION LOGIC ---
+    void OnCollisionEnter2D(Collision2D collision)
     {
-        // Invincible while dashing? (Optional design choice)
-        // if (isDashing) return; 
+        // Is it an Enemy?
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            EnemyHealthAndXP enemy = collision.gameObject.GetComponent<EnemyHealthAndXP>();
 
-        currentHealth -= damage;
-        Debug.Log("Health: " + currentHealth);
-        if (currentHealth <= 0) gameObject.SetActive(false); // Die
+            if (isDashing)
+            {
+                // ATTACK: We hit them while dashing -> They take damage
+                if (enemy != null)
+                {
+                    enemy.TakeDamage(dashDamage);
+                    
+                    // Bounce off slightly
+                    BounceBack(collision.transform.position, 10f);
+                }
+            }
+            else
+            {
+                // OUCH: We bumped into them normally -> We take damage
+                if (enemy != null && myStats != null)
+                {
+                    myStats.TakeDamage(enemy.damageToPlayer);
+                    
+                    // Get knocked back
+                    BounceBack(collision.transform.position, 5f);
+                }
+            }
+        }
+    }
+
+    void BounceBack(Vector3 hazardPos, float force)
+    {
+        Vector2 dir = (transform.position - hazardPos).normalized;
+        rb.linearVelocity = Vector2.zero;
+        rb.AddForce(dir * force, ForceMode2D.Impulse);
     }
 }
