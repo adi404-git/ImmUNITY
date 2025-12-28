@@ -16,7 +16,7 @@ public class PlayerStats : MonoBehaviour
     public float xpDifficultyMultiplier = 1.2f;
     
     public Slider xpBar;      // Drag 'XPBar' here
-    public TextMeshProUGUI levelText; // Drag 'LevelText' here
+    public TMPro.TextMeshProUGUI levelText; // Drag 'LevelText' here
 
     void Start()
     {
