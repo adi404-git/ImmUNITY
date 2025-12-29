@@ -9,6 +9,7 @@ public class PlayerCombat : MonoBehaviour
     public float dashForce = 35f;
     public float dashDuration = 0.2f;
     public float dashCooldown = 1f;
+    public bool isDashBuffActive = false;
 
     // State
     public bool isDashing { get; private set; }

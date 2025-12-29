@@ -6,6 +6,7 @@ TagManager:
   tags:
   - RBC
   - Enemy
+  - PickUps
   layers:
   - Default
   - TransparentFX
