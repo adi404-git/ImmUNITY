@@ -23,7 +23,7 @@ public class UpgradeManager : MonoBehaviour
         Time.timeScale = 0f;
         upgradeCanvas.SetActive(true);
     }
-
+    
     // ---------- UPGRADE CARDS ----------
 
     public void UpgradeMobility()

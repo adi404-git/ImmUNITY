@@ -204,7 +204,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealthAndXP
   maxHealth: 100
-  xpReward: 20
+  xpReward: 50
   damageToPlayer: 5
 --- !u!114 &3142418476565852369
 MonoBehaviour:

@@ -4,21 +4,36 @@ using System.Collections;
 
 public class PlayerCombat : MonoBehaviour
 {
-    [Header("Attack Settings")]
-    public int dashDamage = 30; // 4 hits to kill a 100 HP enemy
+    [Header("Dash Settings")]
+    public int dashDamage = 30;
     public float dashForce = 35f;
     public float dashDuration = 0.2f;
     public float dashCooldown = 1f;
+
+    [Header("Dash Buff")]
     public bool isDashBuffActive = false;
+    private float originalDashForce;
+
+    [Header("Shooting Settings")]
+    public bool canShoot = false;                 // Unlocked at Level 4
+    public GameObject antibodyPrefab;
+    public Transform firePoint;
+    public float fireRate = 1f;                   // 1 shot / second
 
     // State
     public bool isDashing { get; private set; }
     private bool canDash = true;
+    private float nextFireTime = 0f;
 
     // References
     private Rigidbody2D rb;
-    private PlayerStats myStats; // Link to our new Health script
-    private PlayerMovement movement; // Link to movement to pause it while dashing
+    private PlayerStats myStats;
+    private PlayerMovement movement;
+
+    void Awake()
+    {
+        originalDashForce = dashForce;
+    }
 
     void Start()
     {
@@ -27,7 +42,12 @@ public class PlayerCombat : MonoBehaviour
         movement = GetComponent<PlayerMovement>();
     }
 
-    // --- INPUT (Spacebar) ---
+    void Update()
+    {
+        HandleShooting();
+    }
+
+    // ================= DASH =================
     void OnDash(InputValue value)
     {
         if (value.isPressed && canDash)
@@ -40,57 +60,89 @@ public class PlayerCombat : MonoBehaviour
     {
         canDash = false;
         isDashing = true;
-        
-        // Optional: Disable normal movement for a moment
+
         if (movement) movement.enabled = false;
 
-        // Dash towards Mouse (Aim)
-        // Vector2 dashDir = (Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue()) - transform.position).normalized;
-        // OR Dash Forward (Sprite Direction)
-        Vector2 dashDir = transform.right; 
+        Vector2 dashDir = transform.right;
 
-        rb.linearVelocity = Vector2.zero; // Reset drift
+        rb.linearVelocity = Vector2.zero;
         rb.AddForce(dashDir * dashForce, ForceMode2D.Impulse);
 
         yield return new WaitForSeconds(dashDuration);
 
-        if (movement) movement.enabled = true;
         isDashing = false;
+        if (movement) movement.enabled = true;
 
         yield return new WaitForSeconds(dashCooldown);
         canDash = true;
     }
 
-    // --- MASTER COLLISION LOGIC ---
+    // ================= SHOOTING =================
+    void HandleShooting()
+    {
+        if (!canShoot) return;
+        if (isDashing) return;
+
+        if (Mouse.current.leftButton.isPressed && Time.time >= nextFireTime)
+        {
+            Shoot();
+            nextFireTime = Time.time + fireRate;
+        }
+    }
+
+    void Shoot()
+    {
+        if (antibodyPrefab == null || firePoint == null) return;
+
+        GameObject bullet = Instantiate(
+            antibodyPrefab,
+            firePoint.position,
+            firePoint.rotation
+        );
+
+        AntibodyProjectile proj = bullet.GetComponent<AntibodyProjectile>();
+        if (proj != null)
+        {
+            proj.Init(firePoint.right);
+        }
+    }
+
+    // ================= BUFF API (USED BY GLUCOSE) =================
+    public void ApplyDashBuff(float multiplier, float duration)
+    {
+        if (isDashBuffActive) return;
+
+        StartCoroutine(DashBuffRoutine(multiplier, duration));
+    }
+
+    IEnumerator DashBuffRoutine(float multiplier, float duration)
+    {
+        isDashBuffActive = true;
+        dashForce *= multiplier;
+
+        yield return new WaitForSeconds(duration);
+
+        dashForce = originalDashForce;
+        isDashBuffActive = false;
+    }
+
+    // ================= COLLISION =================
     void OnCollisionEnter2D(Collision2D collision)
     {
-        // Is it an Enemy?
-        if (collision.gameObject.CompareTag("Enemy"))
-        {
-            EnemyHealthAndXP enemy = collision.gameObject.GetComponent<EnemyHealthAndXP>();
+        if (!collision.gameObject.CompareTag("Enemy")) return;
 
-            if (isDashing)
-            {
-                // ATTACK: We hit them while dashing -> They take damage
-                if (enemy != null)
-                {
-                    enemy.TakeDamage(dashDamage);
-                    
-                    // Bounce off slightly
-                    BounceBack(collision.transform.position, 10f);
-                }
-            }
-            else
-            {
-                // OUCH: We bumped into them normally -> We take damage
-                if (enemy != null && myStats != null)
-                {
-                    myStats.TakeDamage(enemy.damageToPlayer);
-                    
-                    // Get knocked back
-                    BounceBack(collision.transform.position, 5f);
-                }
-            }
+        EnemyHealthAndXP enemy = collision.gameObject.GetComponent<EnemyHealthAndXP>();
+        if (enemy == null) return;
+
+        if (isDashing)
+        {
+            enemy.TakeDamage(dashDamage);
+            BounceBack(collision.transform.position, 10f);
+        }
+        else
+        {
+            myStats.TakeDamage(enemy.damageToPlayer);
+            BounceBack(collision.transform.position, 5f);
         }
     }
 
