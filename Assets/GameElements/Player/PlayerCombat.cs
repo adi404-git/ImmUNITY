@@ -4,50 +4,41 @@ using System.Collections;
 
 public class PlayerCombat : MonoBehaviour
 {
-    [Header("Dash Settings")]
     public int dashDamage = 30;
     public float dashForce = 35f;
     public float dashDuration = 0.2f;
     public float dashCooldown = 1f;
 
-    [Header("Dash Buff")]
     public bool isDashBuffActive = false;
-    private float originalDashForce;
 
-    [Header("Shooting Settings")]
-    public bool canShoot = false;                 // Unlocked at Level 4
     public GameObject antibodyPrefab;
     public Transform firePoint;
-    public float fireRate = 1f;                   // 1 shot / second
+    public float fireRate = 1f;
 
-    // State
     public bool isDashing { get; private set; }
-    private bool canDash = true;
-    private float nextFireTime = 0f;
 
-    // References
-    private Rigidbody2D rb;
-    private PlayerStats myStats;
-    private PlayerMovement movement;
+    Rigidbody2D rb;
+    PlayerMovement movement;
+    PlayerStats stats;
 
-    void Awake()
-    {
-        originalDashForce = dashForce;
-    }
+    bool canDash = true;
+    bool canShoot = true;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        myStats = GetComponent<PlayerStats>();
         movement = GetComponent<PlayerMovement>();
+        stats = GetComponent<PlayerStats>();
     }
 
     void Update()
     {
-        HandleShooting();
+        if (Mouse.current.leftButton.isPressed && !isDashing)
+        {
+            TryShoot();
+        }
     }
 
-    // ================= DASH =================
     void OnDash(InputValue value)
     {
         if (value.isPressed && canDash)
@@ -61,7 +52,8 @@ public class PlayerCombat : MonoBehaviour
         canDash = false;
         isDashing = true;
 
-        if (movement) movement.enabled = false;
+        if (movement)
+            movement.enabled = false;
 
         Vector2 dashDir = transform.right;
 
@@ -71,68 +63,46 @@ public class PlayerCombat : MonoBehaviour
         yield return new WaitForSeconds(dashDuration);
 
         isDashing = false;
-        if (movement) movement.enabled = true;
+
+        if (movement)
+            movement.enabled = true;
 
         yield return new WaitForSeconds(dashCooldown);
         canDash = true;
     }
 
-    // ================= SHOOTING =================
-    void HandleShooting()
+    void TryShoot()
     {
-        if (!canShoot) return;
-        if (isDashing) return;
+        if (!canShoot || antibodyPrefab == null || firePoint == null)
+            return;
 
-        if (Mouse.current.leftButton.isPressed && Time.time >= nextFireTime)
-        {
-            Shoot();
-            nextFireTime = Time.time + fireRate;
-        }
-    }
+        StartCoroutine(ShootCooldown());
 
-    void Shoot()
-    {
-        if (antibodyPrefab == null || firePoint == null) return;
+        Vector2 dir = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue()) - firePoint.position;
+        dir.Normalize();
 
-        GameObject bullet = Instantiate(
-            antibodyPrefab,
-            firePoint.position,
-            firePoint.rotation
-        );
-
+        GameObject bullet = Instantiate(antibodyPrefab, firePoint.position, Quaternion.identity);
         AntibodyProjectile proj = bullet.GetComponent<AntibodyProjectile>();
-        if (proj != null)
-        {
-            proj.Init(firePoint.right);
-        }
+
+        if (proj)
+            proj.Init(dir);
     }
 
-    // ================= BUFF API (USED BY GLUCOSE) =================
-    public void ApplyDashBuff(float multiplier, float duration)
+    IEnumerator ShootCooldown()
     {
-        if (isDashBuffActive) return;
-
-        StartCoroutine(DashBuffRoutine(multiplier, duration));
+        canShoot = false;
+        yield return new WaitForSeconds(1f / fireRate);
+        canShoot = true;
     }
 
-    IEnumerator DashBuffRoutine(float multiplier, float duration)
-    {
-        isDashBuffActive = true;
-        dashForce *= multiplier;
-
-        yield return new WaitForSeconds(duration);
-
-        dashForce = originalDashForce;
-        isDashBuffActive = false;
-    }
-
-    // ================= COLLISION =================
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (!collision.gameObject.CompareTag("Enemy")) return;
+        if (!collision.gameObject.CompareTag("Enemy"))
+            return;
 
         EnemyHealthAndXP enemy = collision.gameObject.GetComponent<EnemyHealthAndXP>();
-        if (enemy == null) return;
+        if (enemy == null)
+            return;
 
         if (isDashing)
         {
@@ -141,14 +111,14 @@ public class PlayerCombat : MonoBehaviour
         }
         else
         {
-            myStats.TakeDamage(enemy.damageToPlayer);
+            stats.TakeDamage(enemy.damageToPlayer);
             BounceBack(collision.transform.position, 5f);
         }
     }
 
-    void BounceBack(Vector3 hazardPos, float force)
+    void BounceBack(Vector3 source, float force)
     {
-        Vector2 dir = (transform.position - hazardPos).normalized;
+        Vector2 dir = (transform.position - source).normalized;
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(dir * force, ForceMode2D.Impulse);
     }

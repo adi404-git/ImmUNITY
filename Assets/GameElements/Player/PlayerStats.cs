@@ -4,12 +4,10 @@ using TMPro;
 
 public class PlayerStats : MonoBehaviour
 {
-    
     public int maxHealth = 100;
     public int currentHealth;
     public Slider healthBar;
 
-   
     public int currentLevel = 1;
     public int currentXP = 0;
     public int xpToNextLevel = 100;
@@ -18,18 +16,11 @@ public class PlayerStats : MonoBehaviour
     public Slider xpBar;
     public TextMeshProUGUI levelText;
 
-    
     public UpgradeManager upgradeManager;
-
-    
-    public ParticleSystem levelUpParticles;
-
-    private PlayerCombat playerCombat;
 
     void Start()
     {
         currentHealth = maxHealth;
-        playerCombat = GetComponent<PlayerCombat>();
 
         if (healthBar)
         {
@@ -45,8 +36,6 @@ public class PlayerStats : MonoBehaviour
 
         UpdateLevelText();
     }
-
-    // ---------------- HEALTH ----------------
 
     public void TakeDamage(int damage)
     {
@@ -71,11 +60,9 @@ public class PlayerStats : MonoBehaviour
 
     void Die()
     {
-        Debug.Log("Game Over");
+        Time.timeScale = 0f;
         gameObject.SetActive(false);
     }
-
-    // ---------------- XP ----------------
 
     public void GainXP(int amount)
     {
@@ -104,23 +91,8 @@ public class PlayerStats : MonoBehaviour
         UpdateLevelText();
         Heal(maxHealth);
 
-       
-        if (currentLevel == 4 && playerCombat != null)
-        {
-            playerCombat.canShoot = true;
-        }
-
-       
-        if (levelUpParticles != null)
-        {
-            levelUpParticles.Play();
-        }
-
-        
-        if (upgradeManager != null)
-        {
+        if (upgradeManager)
             upgradeManager.OpenUpgradePanel();
-        }
     }
 
     void UpdateLevelText()
