@@ -59,10 +59,11 @@ public class PlayerStats : MonoBehaviour
     }
 
     void Die()
-    {
-        Time.timeScale = 0f;
-        gameObject.SetActive(false);
-    }
+{
+    GameManager.Instance.TriggerDefeat();
+    gameObject.SetActive(false);
+}
+
 
     public void GainXP(int amount)
     {

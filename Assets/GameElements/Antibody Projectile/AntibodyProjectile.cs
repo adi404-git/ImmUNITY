@@ -6,7 +6,7 @@ public class AntibodyProjectile : MonoBehaviour
     public int damage = 10;
     public float lifetime = 3f;
 
-    private Rigidbody2D rb;
+    Rigidbody2D rb;
 
     void Awake()
     {
@@ -14,7 +14,7 @@ public class AntibodyProjectile : MonoBehaviour
         rb.gravityScale = 0f;
     }
 
-    // MUST be called after Instantiate
+    // Called immediately after Instantiate
     public void Init(Vector2 direction)
     {
         rb.linearVelocity = direction.normalized * speed;
@@ -23,6 +23,9 @@ public class AntibodyProjectile : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (!GameManager.Instance.IsPlaying())
+            return;
+
         if (other.CompareTag("Enemy"))
         {
             EnemyHealthAndXP enemy = other.GetComponent<EnemyHealthAndXP>();
@@ -30,6 +33,7 @@ public class AntibodyProjectile : MonoBehaviour
                 enemy.TakeDamage(damage);
 
             Destroy(gameObject);
+            return;
         }
 
         if (other.CompareTag("Wall"))

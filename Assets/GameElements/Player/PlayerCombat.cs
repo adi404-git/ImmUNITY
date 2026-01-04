@@ -4,13 +4,17 @@ using System.Collections;
 
 public class PlayerCombat : MonoBehaviour
 {
+    [Header("Dash Settings")]
     public int dashDamage = 30;
     public float dashForce = 35f;
     public float dashDuration = 0.2f;
     public float dashCooldown = 1f;
 
+    [Tooltip("If true, dash does extra damage")]
     public bool isDashBuffActive = false;
+    public int dashBuffBonusDamage = 20;
 
+    [Header("Shooting")]
     public GameObject antibodyPrefab;
     public Transform firePoint;
     public float fireRate = 1f;
@@ -34,18 +38,25 @@ public class PlayerCombat : MonoBehaviour
     void Update()
     {
         if (!GameManager.Instance.IsPlaying())
-         return;
- 
+            return;
+
         if (Mouse.current.leftButton.isPressed && !isDashing)
         {
             TryShoot();
         }
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+    {
+        if (GameManager.Instance.IsPlaying())
+            GameManager.Instance.PauseGame();
+        else if (GameManager.Instance.currentState == GameManager.GameState.Paused)
+            GameManager.Instance.ResumeGame();
+    }
     }
 
     void OnDash(InputValue value)
-    {  
-         if (!GameManager.Instance.IsPlaying())
-          return;
+    {
+        if (!GameManager.Instance.IsPlaying())
+            return;
 
         if (value.isPressed && canDash)
         {
@@ -112,7 +123,12 @@ public class PlayerCombat : MonoBehaviour
 
         if (isDashing)
         {
-            enemy.TakeDamage(dashDamage);
+            int totalDamage = dashDamage;
+
+            if (isDashBuffActive)
+                totalDamage += dashBuffBonusDamage;
+
+            enemy.TakeDamage(totalDamage);
             BounceBack(collision.transform.position, 10f);
         }
         else
