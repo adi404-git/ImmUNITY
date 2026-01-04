@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-
+using System.Collections;
 public class PlayerStats : MonoBehaviour
 {
     public int maxHealth = 100;
@@ -17,6 +17,8 @@ public class PlayerStats : MonoBehaviour
     public TextMeshProUGUI levelText;
 
     public UpgradeManager upgradeManager;
+    SpriteRenderer sr;
+    Color originalColor;
 
     void Start()
     {
@@ -35,13 +37,16 @@ public class PlayerStats : MonoBehaviour
         }
 
         UpdateLevelText();
+        sr = GetComponent<SpriteRenderer>();
+        originalColor = sr.color;
+
     }
 
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
         currentHealth = Mathf.Max(currentHealth, 0);
-
+        StartCoroutine(DamageFlash());
         if (healthBar)
             healthBar.value = currentHealth;
 
@@ -111,4 +116,11 @@ public class PlayerStats : MonoBehaviour
         if (levelText)
             levelText.text = "Lvl " + currentLevel;
     }
+    IEnumerator DamageFlash()
+{
+    sr.color = new Color(1f, 0.6f, 0.6f);
+    yield return new WaitForSeconds(0.1f);
+    sr.color = originalColor;
+}
+
 }

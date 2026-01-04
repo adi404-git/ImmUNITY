@@ -68,6 +68,7 @@ public class PlayerCombat : MonoBehaviour
     {
         canDash = false;
         isDashing = true;
+        StartCoroutine(DashVisual());
 
         if (movement)
             movement.enabled = false;
@@ -144,4 +145,12 @@ public class PlayerCombat : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(dir * force, ForceMode2D.Impulse);
     }
+    IEnumerator DashVisual()
+{
+    Vector3 originalScale = transform.localScale;
+    transform.localScale = originalScale * 1.1f;
+    yield return new WaitForSeconds(0.1f);
+    transform.localScale = originalScale;
+}
+
 }
