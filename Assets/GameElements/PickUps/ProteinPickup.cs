@@ -34,5 +34,8 @@ public class ProteinPickup : MonoBehaviour
         }
 
         Destroy(gameObject);
+        if (CombatLog.Instance)
+        CombatLog.Instance.Log("ConsumedProtein !. Health +20%");
+
     }
 }

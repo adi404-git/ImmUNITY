@@ -47,6 +47,10 @@ public class PlayerStats : MonoBehaviour
 
         if (currentHealth <= 0)
             Die();
+        
+        if (CombatLog.Instance)
+        CombatLog.Instance.Log("-" + damage + " HP");
+
     }
 
     public void Heal(int amount)
@@ -74,6 +78,9 @@ public class PlayerStats : MonoBehaviour
 
         if (xpBar)
             xpBar.value = currentXP;
+        if (CombatLog.Instance)
+        CombatLog.Instance.Log("+" + amount + " XP");
+
     }
 
     void LevelUp()
@@ -94,6 +101,9 @@ public class PlayerStats : MonoBehaviour
 
         if (upgradeManager)
             upgradeManager.OpenUpgradePanel();
+        if (CombatLog.Instance)
+        CombatLog.Instance.Log("Level Up!");
+
     }
 
     void UpdateLevelText()

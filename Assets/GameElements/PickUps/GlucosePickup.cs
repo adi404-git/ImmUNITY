@@ -33,6 +33,9 @@ public class GlucosePickup : MonoBehaviour
         }
 
         Destroy(gameObject);
+        if (CombatLog.Instance)
+        CombatLog.Instance.Log("Consumed Glucose. DashForce sharply increased.");
+
     }
 
     IEnumerator ApplyDashBuff(PlayerCombat combat)

@@ -35,6 +35,10 @@ public class BossMRSA : MonoBehaviour
 
         if (currentShieldHits <= 0)
             BreakShield();
+        
+        if (CombatLog.Instance)
+         CombatLog.Instance.Log("Shield hit (" + currentShieldHits + " left)");
+
     }
 
     void BreakShield()
@@ -45,6 +49,9 @@ public class BossMRSA : MonoBehaviour
             anim.Play("Broken");
 
         transform.localScale *= 0.8f;
+        if (CombatLog.Instance)
+        CombatLog.Instance.Log("Shield broken!");
+
     }
 
     public void TakeDamage(int damage)

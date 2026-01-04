@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -8,7 +9,7 @@ public class GameManager : MonoBehaviour
     public GameObject pauseMenuCanvas;
     public GameObject victoryCanvas;
     public GameObject defeatCanvas;
-
+    
     public enum GameState
     {
         Start,
@@ -115,4 +116,6 @@ public class GameManager : MonoBehaviour
     {
         Application.Quit();
     }
+
+
 }
