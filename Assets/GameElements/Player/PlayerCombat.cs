@@ -33,6 +33,9 @@ public class PlayerCombat : MonoBehaviour
 
     void Update()
     {
+        if (!GameManager.Instance.IsPlaying())
+         return;
+ 
         if (Mouse.current.leftButton.isPressed && !isDashing)
         {
             TryShoot();
@@ -40,7 +43,10 @@ public class PlayerCombat : MonoBehaviour
     }
 
     void OnDash(InputValue value)
-    {
+    {  
+         if (!GameManager.Instance.IsPlaying())
+          return;
+
         if (value.isPressed && canDash)
         {
             StartCoroutine(PerformDash());

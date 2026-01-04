@@ -40,6 +40,8 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!GameManager.Instance.IsPlaying())
+         return;
        
         rb.AddForce(moveInput * moveSpeed * Time.fixedDeltaTime);
 
